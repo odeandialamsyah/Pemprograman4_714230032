@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:io';
 
@@ -18,6 +18,31 @@ class _AdvancedFormState extends State<AdvancedForm> {
   Color _currentColor = Colors.orange;
   String? _dataFile;
   File? _imageFile;
+
+  void _pickFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null) return;
+
+    final file = result.files.first;
+
+    if (file.extension == 'jpg' ||
+        file.extension == 'png' ||
+        file.extension == 'jpeg') {
+      setState(() {
+        _imageFile = File(file.path!);
+      });
+    }
+
+    setState(() {
+      _dataFile = file.name;
+    });
+
+    _openFile(file);
+  }
+
+  void _openFile(PlatformFile file) {
+    OpenFile.open(file.path);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,32 +77,33 @@ class _AdvancedFormState extends State<AdvancedForm> {
             TextButton(
               child: const Text('Select'),
               onPressed: () async {
-                final selectedDate = await showDatePicker(
+                final selectDate = await showDatePicker(
                   context: context,
                   initialDate: currentDate,
                   firstDate: DateTime(1990),
                   lastDate: DateTime(currentDate.year + 5),
                 );
+
                 setState(() {
-                  if (selectedDate != null) {
-                    _dueDate = selectedDate;
+                  if (selectDate != null) {
+                    _dueDate = selectDate;
                   }
                 });
               },
             ),
           ],
         ),
-        Text(DateFormat('dd-MM-yyyy').format(_dueDate))
+        Text(DateFormat('dd MMMM yyyy').format(_dueDate)),
       ],
     );
   }
 
   Widget buildColorPicker(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Color'),
-        const SizedBox(width: 10),
+        const SizedBox(height: 10),
         Container(height: 100, width: double.infinity, color: _currentColor),
         const SizedBox(height: 10),
         Center(
@@ -88,11 +114,11 @@ class _AdvancedFormState extends State<AdvancedForm> {
                 context: context,
                 builder: (context) {
                   return AlertDialog(
-                    title: const Text('Pick a color'),
+                    title: const Text('Pick Your Color'),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        ColorPicker(
+                        BlockPicker(
                           pickerColor: _currentColor,
                           onColorChanged: (color) {
                             setState(() {
@@ -121,7 +147,7 @@ class _AdvancedFormState extends State<AdvancedForm> {
     );
   }
 
-  Widget buildFilePicker(BuildContext context){
+  Widget buildFilePicker(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,39 +162,16 @@ class _AdvancedFormState extends State<AdvancedForm> {
           ),
         ),
         if (_dataFile != null) Text('File Name: $_dataFile'),
+
         const SizedBox(height: 10),
         if (_imageFile != null)
           Image.file(
             _imageFile!,
-            width: double.infinity,
             height: 200,
+            width: double.infinity,
             fit: BoxFit.cover,
           ),
       ],
     );
-  }
-  void _pickFile() async{
-    final result = await FilePicker.platform.pickFiles();
-    if(result == null) return;
-
-    final file = result.files.first;
-
-    if( file.extension == 'png' || 
-        file.extension == 'jpg' || 
-        file.extension == 'jpeg'){
-      setState(() {
-        _imageFile = File(file.path!);
-      });
-    }
-
-    setState(() {
-      _dataFile = file.name;
-    });
-
-    _openFile(file);
-  }
-
-  void _openFile(PlatformFile file){
-    OpenFile.open(file.path);
   }
 }
