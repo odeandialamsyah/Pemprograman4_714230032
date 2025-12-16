@@ -17,7 +17,7 @@ class _MyHomeState extends State<MyHome> {
   void initialize() async {
     loginData = await SharedPreferences.getInstance();
     setState(() {
-      username = loginData.getString('username') ?? "";
+      username = loginData.getString('saved_username') ?? "";
     });
   }
 
@@ -45,16 +45,24 @@ class _MyHomeState extends State<MyHome> {
               const SizedBox(height: 20), 
               Text(username), 
               ElevatedButton( 
-                onPressed: () { 
+                onPressed: () async {
+                  loginData = await SharedPreferences.getInstance();
+
+                  bool rememberMe = loginData.getBool('remember_me') ?? false;
+
                   loginData.setBool('login', true);
-                  loginData.remove('username');
-                  Navigator.pushReplacement( 
-                    context, 
-                    MaterialPageRoute( 
-                      builder: (context) => const LoginScreen(), 
-                    ), 
-                  ); 
-                }, 
+
+                  if (!rememberMe) {
+                    loginData.remove('saved_username');
+                  }
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
                 child: const Text('Logout'), 
               ), 
             ], 

@@ -16,6 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
+
+
   late SharedPreferences loginData;
   late bool newUser;
 
@@ -41,10 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  bool _rememberMe = false;
+
   @override
   void initState() {
     super.initState();
     checkLogin();
+    loadRememberedUser();
   }
 
   void checkLogin() async {
@@ -60,6 +65,19 @@ class _LoginScreenState extends State<LoginScreen> {
         (route) => false,
       );
     }
+  }
+
+  void loadRememberedUser() async {
+    loginData = await SharedPreferences.getInstance();
+
+    setState(() {
+      _rememberMe = loginData.getBool('remember_me') ?? false;
+
+      if (_rememberMe) {
+        _usernameController.text =
+            loginData.getString('saved_username') ?? "";
+      }
+    });
   }
 
   @override
@@ -111,17 +129,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                  CheckboxListTile(
+                    title: const Text("Remember Me"),
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value!;
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final isValidForm = _formKey.currentState!.validate();
-
                         String username = _usernameController.text;
 
                         if (isValidForm) {
                           loginData.setBool('login', false);
-                          loginData.setString('username', username);
+
+                          if (_rememberMe) {
+                            loginData.setBool('remember_me', true);
+                            loginData.setString('saved_username', username);
+                          } else {
+                            loginData.setBool('remember_me', false);
+                            loginData.remove('saved_username');
+                          }
+
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
